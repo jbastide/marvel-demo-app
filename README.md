@@ -4,8 +4,9 @@ This Ruby Sinatra app displays information for one special Marvel comic
 ## Installation
 1. `bundle install`
 2. Customize marvel.rb to retrieve the comic you want.
-  - Enter in a unique comic ID. Try a number between 1-400. Check the live interactive
-   Marvel API if you want to find a specific comic.
+  - Enter in a unique comic ID. Try a number between 100-400. Or just go with the default
+  already in the app.
+  - Check the live interactive Marvel API if you want to find a specific comic.
 3. Add your public and private keys to marvel.rb (WARNING: Don't commit your
 private key to source control!!!)
 
