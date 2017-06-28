@@ -5,20 +5,26 @@ require 'rest-client'
 require 'json'
 require 'sinatra/static_assets'
 
+#
+# COMIC_ID 104 is an example of a comic with no listed characters.
+# COMIC_ID 400 does list a character as defined by the API (X-Men).
+# Browse comic IDs in the interactive Marvel API.
+#
 
-COMIC_ID = 400 # Set this to an arbitrary
+COMIC_ID = 399 # FYI, features Spider-Man
 
-PUBLIC_KEY = <YOUR_PUBLIC_KEY_STRING>
+PUBLIC_KEY = <YOUR_PUBLIC_MARVEL_API_KEY>
 
 #
 # WARNING: Keep your private key out of public view!!!
 # DON'T commit it to public source control!!!
 #
 
-PRIVATE_KEY = <YOUR_SECRET_PRIVATE_KEY_STRING>
+PRIVATE_KEY = <YOUR_PRIVATE_MARVEL_API_KEY>
 
 #
-# Routes here, mapping http verbs to URLs.
+# Single page app.
+# One route here, mapping an http verb to a URL.
 #
 
 get '/' do
@@ -36,7 +42,7 @@ get '/' do
   json_comic_api_result = get_api_result(marvel_auth_params, comic_resource_string)
 
   if json_comic_api_result == nil
-    exit "ERROR: Unable to retrieve an API result for resource: #{comic_resource_string}"
+    exit "ERROR: Unable to retrieve a comic API result."
   end
 
   #
@@ -47,19 +53,34 @@ get '/' do
   @comic_info = parse_comic_data(json_comic_api_result)
 
   #
-  # Get the list of all the characters, including their names and associated
-  # thumbnail URLs.
+  # Get the list of all the characters in the comic, including their names and associated
+  # thumbnail URLs. Not all comics have characters listed. All of the comics
+  # I spot checked through the interactive API had either zero or one characters
+  # listed, and they categorized groups of characters (aka, the X-Men) the same
+  # as single characters (Silver Surfer.)
   #
 
   character_resource_string = "comics/#{COMIC_ID}/characters"
   begin
     json_character_api_result = get_api_result(marvel_auth_params, character_resource_string)
   rescue
+    puts "INFO: Unable to find any character info for the story."
   end
 
-  @character_list = parse_character_data(json_character_api_result)
+  @character_list = []
+
+  if json_character_api_result
+    @character_list = parse_character_data(json_character_api_result)
+  end
+
   erb :index
 end
+
+
+#
+# All helper functions below
+#
+
 
 #
 # Helper function.
@@ -71,13 +92,18 @@ def hash_json_result(json_data)
   begin
     api_hash = JSON.parse(json_data)
   rescue
+    puts "INFO: Couldn't parse JSON data"
   end
 
   api_hash
 end
 
 #
-# This is the first API call we do.
+# Get info about a comic.
+#
+# Returns a hash.
+#
+# This makes the first API call.
 #
 
 def parse_comic_data(api_result)
@@ -87,6 +113,7 @@ def parse_comic_data(api_result)
   #
   # We're searching by unique comic ID. Thus, we only expect a single result here.
   #
+
   unless api_hash["data"]["count"] == 1
     exit "ERROR: Retrieved more than a single result with that comic ID!"
   end
@@ -103,33 +130,32 @@ end
 
 
 #
-# Let's clean up the character data so we're not passing in all of it.
-# This is the second API call.
+# Let's clean up the character data so we're not passing in all of it to the view.
+# This makes the second API call.
+#
+# Returns an array of character hashes.
 #
 
 def parse_character_data(api_result)
 
-  api_hash = {}
-
-  begin
-    api_hash = JSON.parse(api_result)
-  rescue
-  end
+  api_hash = hash_json_result(api_result)
 
   character_list = []
 
-  #prefix = 'api_hash["data"]["results"]'
-  api_hash["data"]["results"].each do |result|
-    character_list.push({name: result["name"],
-                         thumbnail: result["thumbnail"]["path"],
-                         img_extension: result["thumbnail"]["extension"]
-                        })
+  if api_hash
+    api_hash["data"]["results"].each do |result|
+      character_list.push({name: result["name"],
+                           thumbnail: result["thumbnail"]["path"],
+                           img_extension: result["thumbnail"]["extension"]
+                          })
+    end
   end
+
   return character_list
 end
 
 #
-# Data structures and other functions here.
+# Helper function for creating authentication params for the API
 #
 
 def create_marvel_auth_params()
@@ -145,8 +171,9 @@ def create_marvel_auth_params()
 end
 
 #
-# Specify resource type as argument. Returns a JSON object.
-# For simplicity, just specify a resource string that's preformed.
+# Specify API resource as string.
+#
+# Returns a JSON object.
 #
 
 def get_api_result(auth_params, resource_string)
