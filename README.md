@@ -1,5 +1,5 @@
 # One Special Comic
-This app displays information for one special Marvel comic
+This Ruby Sinatra app displays information for one special Marvel comic
 
 ## Installation
 1. `bundle install`
