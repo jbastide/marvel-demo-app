@@ -1,0 +1,28 @@
+  <h2>Comic Title</h2>
+    <p><%= @comic_info[:title] %></p>
+
+  <h2>Comic Description</h2>
+    <p><%= @comic_info[:description] %></p>
+
+  <br>
+  <table class="table">
+  <!-- Comic Name -->
+  <tr>
+    <th>Character Name</th>
+    <th>Character Image</th>
+  </tr>
+
+  <% @character_list.each do |character| %>
+    <tr>
+      <td><%= character[:name] %></td>
+      <td><%= image_tag "#{character[:thumbnail]}.#{character[:img_extension]}", alt: "Marvel character", style:"width: 200px; height:auto;" %></td>
+    </tr>
+  <% end %>
+
+  </table>
+  <!-- Names and pics of characters in the story -->
+
+  <!-- Marvel attribution text -->
+  <footer class="panel-footer">
+    <%= @comic_info[:attributionHTML] %>
+  </footer>
